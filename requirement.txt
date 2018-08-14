@@ -1,2 +1,16 @@
 #Add your install command here
 #Use the following command to install the requirement: pip install -r requirements.txt 
+
+Testclassification.mdl holds the training data
+
+Change the directory before running 
+Run test.py first and then test2.py
+
+Test.py just need to run once 
+
+Run on 2 ways:
+-By txt(Text review file)
+-By user input
+
+
+
