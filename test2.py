@@ -12,25 +12,25 @@ def load(clf_file):
 
 def make_dict():
     #read negative reviews
-    direc = "Reviews/negativeReviews/"
+    direc = "negativeReviews/"
     files = os.listdir(direc)
-    emails = [direc + email for email in files]
+    reviews = [direc + review for review in files]
     words = []
-    c = len(emails)
-    for email in emails:
-        f = open(email, encoding="utf8")
+    c = len(reviews)
+    for review in reviews:
+        f = open(review, encoding="utf8")
         blob = f.read()
         words += blob.split(" ")
         print(c)
         c -= 1
 
     #read positive reviews
-    direc = "Reviews/positiveReviews/"    
+    direc = "positiveReviews/"    
     files = os.listdir(direc)
-    emails = [direc + email for email in files]
-    c = len(emails)
-    for email in emails:
-        f = open(email, encoding="utf8")
+    reviews = [direc + review for review in files]
+    c = len(reviews)
+    for review in reviews:
+        f = open(review, encoding="utf8")
         blob = f.read()
         words += blob.split(" ")
         print(c)
@@ -52,11 +52,14 @@ f = open('TestReview.txt', encoding="utf8")
 lines = [line.rstrip('\n') for line in open('TestReview.txt', encoding="utf8")]
 for line in lines:
     features = []
+    fulline = line
     line = line.split()
     for word in d:
         features.append(line.count(word[0]))
     res = clf.predict([features])
+    print(fulline)
     print (["Negative", "Positive"][res[0]])
+    print("\n")
 
 
 while True:
