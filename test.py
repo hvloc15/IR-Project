@@ -1,101 +1,82 @@
 import os
 from collections import Counter
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import train_test_split as tts
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import _pickle as c
 
+count_vector = CountVectorizer(binary=True, max_features=30000)
+tfidf_transformer = TfidfTransformer()
 
 def save(clf, name):
     with open(name, 'wb') as fp:
         c.dump(clf, fp)
     print("saved")
 
-
-def make_dict():
-	#read negative reviews
-    direc = "negativeReviews/"
-    files = os.listdir(direc)
-    reviews = [direc + review for review in files]
+def read_files_in_directory(dir_name):
+    files_names = os.listdir(dir_name)
+    files_names = [dir_name + file_name for file_name in files_names]
     words = []
-    c = len(reviews)
-    for review in reviews:
-        f = open(review, encoding="utf8")
+    for file_name in files_names:
+        f = open(file_name, encoding="utf8")
         blob = f.read()
         words += blob.split(" ")
-        print(c)
-        c -= 1
-
-    #read positive reviews
-    direc = "positiveReviews/"    
-    files = os.listdir(direc)
-    reviews = [direc + review for review in files]
-    c = len(reviews)
-    for review in reviews:
-        f = open(review, encoding="utf8")
-        blob = f.read()
-        words += blob.split(" ")
-        print(c)
-        c -= 1
-
-    for i in range(len(words)):
-        if not words[i].isalpha():
-            words[i] = ""
-
-    dictionary = Counter(words)
-    del dictionary[""]
-    return dictionary.most_common(30000)
-
-
-def make_dataset(dictionary):
-    direc = "negativeReviews/"
-    files = os.listdir(direc)
-    reviews = [direc + review for review in files]
-    feature_set = []
+    return words
+    
+def get_features_targets():
     labels = []
-    c = len(reviews)
+	#read negative reviews
+    negative_words = read_files_in_directory("negativeReviews/")
+    labels = [0]*len(negative_words)
+    #read positive reviews
+    positive_words = read_files_in_directory("positiveReviews/")
+    labels+=[1]*len(positive_words)
+    
+    words = negative_words + positive_words  
 
-    for review in reviews:
-        data = []
-        f = open(review,  encoding="utf8")
-        words = f.read().split(' ')
-        for entry in dictionary:
-            data.append(words.count(entry[0]))
-        feature_set.append(data)
-        labels.append(0)
-        print(c)
-        c = c - 1
+    return words, labels
 
-    direc = "positiveReviews/"
-    files = os.listdir(direc)
-    reviews = [direc + review for review in files]
-    c = len(reviews)
+def get_count_matrix(features):
+    train_count = count_vector.fit_transform(features)
+    return train_count
+    
+def get_tfidf_representation(count_matrix):
+    x_train_tfidf = tfidf_transformer.fit_transform(count_matrix)
+    return x_train_tfidf
 
-    for review in reviews:
-        data1 = []
-        f = open(review,  encoding="utf8")
-        words = f.read().split(' ')
-        for entry in dictionary:
-            data1.append(words.count(entry[0]))
-        feature_set.append(data1)
-        labels.append(1)
-        print(c)
-        c = c - 1
+print("---------------------Start-------------------------")
+print("Read files.....")
+features, labels = get_features_targets()
 
-    return feature_set, labels
+count_vector = CountVectorizer(binary=True)
+train_count = count_vector.fit_transform(features)
 
+tfidf_transformer = TfidfTransformer()
+X_train_tfidf = tfidf_transformer.fit_transform(train_count)
 
-d = make_dict()
-features, labels = make_dataset(d)
+print("Fitting....")
+clf = MultinomialNB().fit(X_train_tfidf, labels)
 
 
-print(len(features))
-
-x_train, x_test, y_train, y_test = tts(features, labels, test_size=0.2)
-
-clf = MultinomialNB()
-clf.fit(x_train, y_train)
-
-preds = clf.predict(x_test)
-print(accuracy_score(y_test, preds))
 save(clf, "text-classifier.mdl")
+
+print("Predict")
+docs_new = []
+
+f = open('TestReview.txt', encoding="utf8")
+lines = [line.rstrip('\n') for line in open('TestReview.txt', encoding="utf8")]
+for line in lines:
+    fulline = line
+    docs_new.append(line)
+
+X_new_counts = count_vector.transform(docs_new)
+X_new_tfidf = tfidf_transformer.transform(X_new_counts)
+
+predicted = clf.predict(X_new_tfidf)
+
+label = ['Negative Review', 'Positive Review']
+
+for doc, category in zip(docs_new, predicted):
+    print('%r => %s' % (doc, label[category]))
