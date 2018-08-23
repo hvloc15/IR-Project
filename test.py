@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import _pickle as c
+import _pickle as c     
 
 count_vector = CountVectorizer(binary=True, max_features=30000)
 tfidf_transformer = TfidfTransformer()
@@ -24,7 +24,7 @@ def read_files_in_directory(dir_name):
         blob = f.read()
         words += blob.split(" ")
     return words
-    
+   
 def get_features_targets():
     labels = []
 	#read negative reviews
@@ -46,6 +46,18 @@ def get_tfidf_representation(count_matrix):
     x_train_tfidf = tfidf_transformer.fit_transform(count_matrix)
     return x_train_tfidf
 
+def SaveDict(dictionary):
+    pickle_out = open("dict.pickle","wb")
+    c.dump(dictionary, pickle_out)
+    pickle_out.close()
+
+def LoadDict(dictionary):
+    pickle_in = open("dict.pickle","rb")
+    example_dict = c.load(pickle_in)
+    pickle_in.close()
+    
+
+
 print("---------------------Start-------------------------")
 print("Read files.....")
 features, labels = get_features_targets()
@@ -58,11 +70,10 @@ X_train_tfidf = tfidf_transformer.fit_transform(train_count)
 
 print("Fitting....")
 clf = MultinomialNB().fit(X_train_tfidf, labels)
-
-
 save(clf, "text-classifier.mdl")
 
 print("Predict")
+
 docs_new = []
 
 f = open('TestReview.txt', encoding="utf8")
